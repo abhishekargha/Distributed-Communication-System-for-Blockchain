@@ -11,6 +11,9 @@ const int localPort = 6005; // Local port to listen for incoming connections
 WiFiClient client; // Client for Server 1
 WiFiServer server(localPort); // Server to listen for any incoming connection
 
+String lastSentMessage = ""; // Store the last sent message
+unsigned long timerStart = 0; // Store the start time of the timer
+
 void setup() {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
@@ -40,6 +43,10 @@ void loop() {
       
       // Send the input as a message to the server
       client.print(message);
+
+      // Store the sent message and start the timer
+      lastSentMessage = message;
+      timerStart = millis();
     }
   } else {
     Serial.println("Re-connecting to Server 1");
@@ -58,6 +65,14 @@ void loop() {
       String line = newClient.readStringUntil('\r');
       Serial.print("Received: ");
       Serial.println(line);
+
+      // If the received message is the same as the last sent message, stop the timer and print the elapsed time
+      if (line == lastSentMessage) {
+        unsigned long elapsedTime = millis() - timerStart;
+        Serial.print("Elapsed time: ");
+        Serial.print(elapsedTime);
+        Serial.println(" ms");
+      }
     }
   }
 }
