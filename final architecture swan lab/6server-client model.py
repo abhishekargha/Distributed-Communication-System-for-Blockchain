@@ -26,7 +26,7 @@ class Node:
     def forward_message(self, message, host, port):
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((host, port))
-        client.send(message.encode()) 
+        client.send((message + '\r').encode()) 
 
 if __name__ == "__main__":
     node4 = Node('localhost', 7000)
