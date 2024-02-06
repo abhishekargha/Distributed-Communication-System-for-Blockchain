@@ -1,72 +1,66 @@
-// It connects to a specified WiFi network and then establishes a connection to a
-// server on a specified host and port. It sends messages to the server and prints 
- //the server’s responses.
-// Include the WiFi library to use WiFi functions
+// include the wifi library to use wifi functions
 #include <WiFi.h>
 
-// Define the WiFi credentials
-const char* ssid = "SWAN LAB"; // The SSID (name) of your WiFi network
-const char* password = "swan@123"; // The password of your WiFi network
+//define the wifi credentials
+const char* ssid = "SWAN LAB"; // the ssid (name) of your wifi network
+const char* password = "swan@123"; //the password of your wifi network
 
-// Define the server host and port
-const char* host = "192.168.1.24"; // The hostname or IP address of the server
-const int port = 5005; // The port number the server is listening on
+// define the server host and port for the first server (from where we recieve messages)
+const char* host1 = "192.168.1.24"; // the hostname of IP address of the second server 
+const int port1 = 5005; // the port number the seconf server is listening on
 
-// Create a WiFiClient object
-WiFiClient client;
+// define the server host and port for the second server (to where we send messages)
+const char* host2 = "192.168.1.25"; // the hostname or IP address of the second server
+const int port2 = 5006; // the port number the second server is listening to
+
+// create two wificlient objects
+WiFiClient client1; // client to connect to the first server 
+WiFiClient client2; // client to connect to the server 
 
 void setup() {
-  // Initialize serial communication at a baud rate of 115200
+ // initialize serial communication at a baud rate of 115200
   Serial.begin(115200);
 
-  // Connect to the WiFi network
+ // connect to the wifi network 
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500); // Wait for 500 milliseconds
-    Serial.print("."); // Print a dot every 500 milliseconds until connected
+    delay(500); // wait for 500 milliseconds
   }
-  Serial.println();
-  Serial.println("WiFi connected");
 
-  // Connect to the server
-  Serial.print("Connecting to server");
-  if (!client.connect(host, port)) {
-    Serial.println("Connection failed"); // Print an error message if the connection fails
-    return;
+  // connect to the first server 
+  if (!client1.connect(host1, port1)) {
+    return; // if the connection fails , exit the function
   }
-  Serial.println();
-  Serial.println("Connected to server");
+
+  // connect to the second server
+  if (!client2.connect(host2, port2)) {
+    return; // if the connection fails, exit the function
+  }
 }
 
+
 void loop() {
-  // Check if the client is connected to the server
-  if (client.connected()) {
-    // Get a message from the user
-    Serial.println("Enter a message to send to the server: ");
-    while (Serial.available() == 0) {
-      // Wait for user input
+ // check if the first client is connected to the first server
+  if (client1.connected()) {
+   // if there are available bytes to read from the server 
+    while (client1.available()) {
+     // read a line from the first server 
+      String line = client1.readStringUntil('\r');
+     // send the line to the second server
+      client2.print(line);
     }
-    String message = Serial.readString(); // Read the user's message
-
-    // Send the message to the server
-    client.print(message);
-
-    // Print the server's response
-    Serial.println("Server response: ");
-    while (client.available()) {
-      String line = client.readStringUntil('\r'); // Read the server's response until a carriage return ('\r') is encountered
-      Serial.print(line); // Print the server's response
-    }
-    Serial.println();
   }
   else {
-    // If the client is not connected to the server, try to reconnect
-    Serial.println("Re-connecting to server");
-    if (!client.connect(host, port)) {
-      Serial.println("Connection failed"); // Print an error message if the connection fails
-      return;
+   // if the first client is not connected to the first server , try to reconnect
+    if (!client1.connect(host1, port1)) {
+      return; // if the connection fails, exit the function
     }
-    Serial.println("Connected to server");
+  }
+  // check if the second client is connected to the second server 
+  if (!client2.connected()) {
+   // if the second client is not connected to the second server , try to reconnect
+    if (!client2.connect(host2, port2)) {
+      return; // if the connection fails, exit the function
+    }
   }
 }
