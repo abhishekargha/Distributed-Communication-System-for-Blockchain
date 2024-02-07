@@ -1,33 +1,49 @@
 import socket
-import threading
-import time 
 
-class Node:
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
+# Create a TCP/IP socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def start_server(self, forward_host, forward_port):
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((self.host, self.port))
-        server.listen(1)
-        print(f"Server started on {self.host}:{self.port}")
+# Define the server host and port
+host = '192.168.1.24'  # The IP address of your laptop
+port = 5005  # The same port as used by the ESP32
 
+# Bind the socket to the host and port
+sock.bind((host, port))
+
+# Listen for incoming connections
+sock.listen(1)
+print(f'Server started on {host}:{port}')
+
+# Define the forwarding server host and port
+forward_host = '192.168.1.25'  # The IP address of the next server
+forward_port = 5006  # The port of the next server
+
+while True:
+    # Wait for a connection
+    print('Waiting for a connection...')
+    connection, client_address = sock.accept()
+
+    try:
+        print(f'Connection from {client_address}')
+
+        # Receive the data in small chunks and print it
         while True:
-            client, address = server.accept()
-            data = client.recv(1024)
-            if not data:
+            data = connection.recv(16)
+            print(f'Received "{data.decode()}"')
+            if data:
+                print('Sending data back to the client')
+                connection.sendall(data)
+
+                # Forward the data to the next server
+                print('Forwarding data to the next server')
+                forward_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                forward_sock.connect((forward_host, forward_port))
+                forward_sock.sendall(data)
+                forward_sock.close()
+            else:
+                print('No more data from', client_address)
                 break
-            print(f"Received: {data.decode()}")
-            client.send("Message received".encode())
-            time.sleep(5)
-            self.forward_message(data.decode(), forward_host, forward_port)
 
-    def forward_message(self, message, host, port):
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((host, port))
-        client.send(message.encode()) 
-
-if __name__ == "__main__":
-    node4 = Node('localhost', 7000)
-    threading.Thread(target=node4.start_server, args=('localhost', 5000)).start()
+    finally:
+        # Clean up the connection
+        connection.close()
