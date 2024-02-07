@@ -4,15 +4,15 @@ const char* ssid = "SWAN LAB";
 const char* password = "swan@123";
 
 const char* host1 = "192.168.1.24"; // IP address of Server 1
-const int port1 = 5005; // Port of Server 1
+const int port1 = 5000; // Port of Server 1
 
-const int localPort = 6005; // Local port to listen for incoming connections
+const int localPort = 4095; // Local port to listen for incoming connections
 
 WiFiClient client; // Client for Server 1
 WiFiServer server(localPort); // Server to listen for any incoming connection
 
 String lastSentMessage = ""; // Store the last sent message
-unsigned long timerStart = 0; // Store the start time of the timer
+unsigned long myTimerStart = 0; // Store the start time of the timer
 
 void setup() {
   Serial.begin(115200);
@@ -46,7 +46,7 @@ void loop() {
 
       // Store the sent message and start the timer
       lastSentMessage = message;
-      timerStart = millis();
+      myTimerStart = millis();
     }
   } else {
     Serial.println("Re-connecting to Server 1");
@@ -68,7 +68,7 @@ void loop() {
 
       // If the received message is the same as the last sent message, stop the timer and print the elapsed time
       if (line == lastSentMessage) {
-        unsigned long elapsedTime = millis() - timerStart;
+        unsigned long elapsedTime = millis() - myTimerStart;
         Serial.print("Elapsed time: ");
         Serial.print(elapsedTime);
         Serial.println(" ms");
